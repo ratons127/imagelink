@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-ink-50 text-ink-900 font-sans;
+}
+
+.dark body {
+  @apply bg-ink-900 text-ink-50;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(18px);
+}
+
+.dark .glass {
+  background: rgba(15, 23, 42, 0.7);
+}
+
+.gradient-surface {
+  background: radial-gradient(circle at 20% 20%, rgba(107, 75, 255, 0.15), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.12), transparent 45%),
+    linear-gradient(180deg, rgba(248, 250, 252, 0.8), rgba(243, 244, 246, 0.9));
+}
+
+.dark .gradient-surface {
+  background: radial-gradient(circle at 20% 20%, rgba(139, 125, 255, 0.15), transparent 40%),
+    radial-gradient(circle at 80% 0%, rgba(34, 197, 94, 0.12), transparent 45%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(2, 6, 23, 0.95));
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition;
+}
+
+.btn-primary {
+  @apply bg-accent-500 text-white hover:bg-accent-600;
+}
+
+.btn-secondary {
+  @apply bg-ink-100 text-ink-900 hover:bg-ink-200;
+}
+
+.dark .btn-secondary {
+  @apply bg-ink-800 text-ink-50 hover:bg-ink-700;
+}
+
+.input {
+  @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-accent-500;
+}
+
+.dark .input {
+  @apply border-ink-700 bg-ink-900 text-ink-100;
+}
