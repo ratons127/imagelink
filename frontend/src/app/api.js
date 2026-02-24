@@ -15,6 +15,11 @@ const setTokens = ({ accessToken, refreshToken }) => {
   if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 };
 
+const clearTokens = () => {
+  localStorage.removeItem("accessToken");
+  localStorage.removeItem("refreshToken");
+};
+
 api.interceptors.request.use((config) => {
   const { accessToken } = getTokens();
   if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
@@ -54,6 +59,7 @@ api.interceptors.response.use(
         return api(original);
       } catch (err) {
         processQueue(err, null);
+        clearTokens();
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
@@ -63,4 +69,4 @@ api.interceptors.response.use(
   }
 );
 
-export { api, setTokens, getTokens };
+export { api, setTokens, getTokens, clearTokens };

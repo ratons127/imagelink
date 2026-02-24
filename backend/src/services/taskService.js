@@ -82,6 +82,7 @@ export const listTasks = async ({ userId, filters, page = 1, pageSize = 20 }) =>
   if (filters.assignedToId) where.assignedToId = filters.assignedToId;
   if (filters.archived === "true") where.archivedAt = { not: null };
   if (filters.archived === "false") where.archivedAt = null;
+  if (filters.archived === undefined) where.archivedAt = null;
 
   if (filters.view === "my-day") {
     const start = new Date();
@@ -134,7 +135,12 @@ export const updateSubtask = async ({ userId, subtaskId, data }) => {
     err.status = 404;
     throw err;
   }
-  const task = await prisma.task.findFirst({ where: { id: sub.taskId } });
+  const task = await prisma.task.findFirst({ where: { id: sub.taskId, deletedAt: null } });
+  if (!task) {
+    const err = new Error("Task not found");
+    err.status = 404;
+    throw err;
+  }
   await ensureListAccess(task.listId, userId);
   return prisma.subTask.update({
     where: { id: subtaskId },
@@ -153,7 +159,12 @@ export const deleteSubtask = async ({ userId, subtaskId }) => {
     err.status = 404;
     throw err;
   }
-  const task = await prisma.task.findFirst({ where: { id: sub.taskId } });
+  const task = await prisma.task.findFirst({ where: { id: sub.taskId, deletedAt: null } });
+  if (!task) {
+    const err = new Error("Task not found");
+    err.status = 404;
+    throw err;
+  }
   await ensureListAccess(task.listId, userId);
   return prisma.subTask.delete({ where: { id: subtaskId } });
 };

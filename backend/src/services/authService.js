@@ -13,15 +13,18 @@ export const register = async ({ email, password, phone }) => {
     throw err;
   }
   const passwordHash = await bcrypt.hash(password, 12);
-  const user = await prisma.user.create({
-    data: { email, passwordHash, phone }
-  });
-  await prisma.taskList.create({
-    data: {
-      name: "My Tasks",
-      ownerId: user.id,
-      members: { create: { userId: user.id, role: "owner" } }
-    }
+  const user = await prisma.$transaction(async (tx) => {
+    const created = await tx.user.create({
+      data: { email, passwordHash, phone }
+    });
+    await tx.taskList.create({
+      data: {
+        name: "My Tasks",
+        ownerId: created.id,
+        members: { create: { userId: created.id, role: "owner" } }
+      }
+    });
+    return created;
   });
   return issueTokens(user.id, email);
 };
@@ -43,7 +46,14 @@ export const login = async ({ email, password }) => {
 };
 
 export const refresh = async ({ refreshToken }) => {
-  const payload = verifyRefreshToken(refreshToken);
+  let payload;
+  try {
+    payload = verifyRefreshToken(refreshToken);
+  } catch {
+    const err = new Error("Invalid refresh token");
+    err.status = 401;
+    throw err;
+  }
   const tokenRecord = await prisma.refreshToken.findFirst({
     where: { token: refreshToken, userId: payload.sub }
   });
@@ -52,7 +62,9 @@ export const refresh = async ({ refreshToken }) => {
     err.status = 401;
     throw err;
   }
-  return issueTokens(payload.sub, payload.email, refreshToken);
+  // Rotate refresh tokens to reduce replay risk.
+  await prisma.refreshToken.deleteMany({ where: { token: refreshToken } });
+  return issueTokens(payload.sub, payload.email);
 };
 
 export const logout = async ({ refreshToken }) => {

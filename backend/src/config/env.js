@@ -2,16 +2,17 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+const smsEnabled = process.env.SMS_ENABLED === "true";
 const required = [
   "PORT",
   "DATABASE_URL",
   "JWT_SECRET",
   "JWT_REFRESH_SECRET",
-  "REDIS_URL",
-  "TWILIO_ACCOUNT_SID",
-  "TWILIO_AUTH_TOKEN",
-  "TWILIO_FROM_NUMBER"
+  "REDIS_URL"
 ];
+if (smsEnabled) {
+  required.push("TWILIO_ACCOUNT_SID", "TWILIO_AUTH_TOKEN", "TWILIO_FROM_NUMBER");
+}
 
 const missing = required.filter((k) => !process.env[k]);
 if (missing.length) {
@@ -28,6 +29,6 @@ export const env = {
   twilioToken: process.env.TWILIO_AUTH_TOKEN,
   twilioFrom: process.env.TWILIO_FROM_NUMBER,
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
-  smsEnabled: process.env.SMS_ENABLED !== "false",
+  smsEnabled,
   emailEnabled: process.env.EMAIL_ENABLED === "true"
 };

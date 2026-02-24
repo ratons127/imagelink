@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   db:
     image: postgres:16-alpine
@@ -24,11 +23,11 @@ services:
       JWT_SECRET: change_me
       JWT_REFRESH_SECRET: change_me_too
       REDIS_URL: redis://redis:6379
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
-      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
       CLIENT_URL: http://localhost:5173
-      SMS_ENABLED: "true"
+      SMS_ENABLED: "false"
     ports:
       - "4000:4000"
     depends_on:
@@ -39,12 +38,15 @@ services:
     build: ./backend
     command: ["node","src/worker/reminderWorker.js"]
     environment:
+      PORT: 4000
       DATABASE_URL: postgresql://taskflow:taskflow@db:5432/taskflow
+      JWT_SECRET: change_me
+      JWT_REFRESH_SECRET: change_me_too
       REDIS_URL: redis://redis:6379
-      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
-      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
-      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER}
-      SMS_ENABLED: "true"
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER:-}
+      SMS_ENABLED: "false"
     depends_on:
       - db
       - redis
