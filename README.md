@@ -80,7 +80,33 @@ Open `http://localhost:5173`.
 docker compose up --build
 ```
 
+## Android App (Native)
+- Android project: `android-app/TaskFlowMobile`
+- Mobile README: `android-app/TaskFlowMobile/README.md`
+- Emulator health check: `http://10.0.2.2:4000/api/health`
+
+### Android + Local Docker (recommended dev flow)
+1. Start backend stack:
+```
+docker compose up -d --build
+```
+2. Verify API:
+```
+http://localhost:4000/api/health
+```
+3. Open `android-app/TaskFlowMobile` in Android Studio.
+4. Run emulator and install app.
+5. If `10.0.2.2` does not work, use `adb reverse` and set Android debug URL to `http://127.0.0.1:4000/api/`.
+
+## EC2 Deployment (Single Server)
+- Deployment files: `deploy/ec2/`
+- Guide: `deploy/ec2/README.md`
+- Compose stack: `deploy/ec2/docker-compose.ec2.yml`
+- Env template: `deploy/ec2/.env.example`
+
 ## API Overview
+- `GET /health`
+- `GET /api/health`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
 - `POST /api/auth/refresh`
@@ -106,3 +132,4 @@ docker compose up --build
 ## Notes
 - For SMS reminders, configure Twilio credentials in `backend/.env`.
 - Worker uses BullMQ and Redis. Keep it running to send SMS.
+- For local Docker without Twilio, set `SMS_ENABLED=false`.
