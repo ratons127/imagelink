@@ -44,3 +44,9 @@ buildConfigField("String", "API_BASE_URL", "\"http://YOUR_EC2_IP:4000/api/\"")
 ## Linux VM Backend Template
 
 See `deployment/linux-vm/README.md` for a simple `Nginx + systemd` deployment template.
+
+## Release Signing (Play)
+
+- Copy `keystore.properties.example` to `keystore.properties` and fill your local signing values.
+- Run `scripts/build-release-aab.ps1` (Windows PowerShell) to build a release AAB with the production API URL.
+- Full guide: `deployment/ANDROID_PLAY_RELEASE_FULL_NOTE.md`

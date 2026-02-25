@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   id("com.android.application")
   id("org.jetbrains.kotlin.android")
@@ -8,6 +10,14 @@ val releaseApiBaseUrl = providers
   .gradleProperty("TASKFLOW_RELEASE_API_BASE_URL")
   .orElse("https://your-api-domain.example/api/")
   .get()
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+  if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.inputStream().use { load(it) }
+  }
+}
+val hasReleaseSigning = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+  .all { !keystoreProperties.getProperty(it).isNullOrBlank() }
 
 android {
   namespace = "com.taskflow.mobile"
@@ -23,6 +33,17 @@ android {
     buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
   }
 
+  signingConfigs {
+    if (hasReleaseSigning) {
+      create("release") {
+        storeFile = file(keystoreProperties.getProperty("storeFile"))
+        storePassword = keystoreProperties.getProperty("storePassword")
+        keyAlias = keystoreProperties.getProperty("keyAlias")
+        keyPassword = keystoreProperties.getProperty("keyPassword")
+      }
+    }
+  }
+
   buildTypes {
     debug {
       buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
@@ -34,6 +55,9 @@ android {
         "proguard-rules.pro"
       )
       buildConfigField("String", "API_BASE_URL", "\"$releaseApiBaseUrl\"")
+      if (hasReleaseSigning) {
+        signingConfig = signingConfigs.getByName("release")
+      }
     }
   }
 

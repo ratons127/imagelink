@@ -168,6 +168,31 @@ Important:
 - Store passwords in a secure password manager
 - Do not commit the keystore to GitHub
 
+## Configure Gradle release signing (added to this project)
+
+This project now supports local release signing via `keystore.properties` at the Android project root.
+
+1. Copy the template:
+
+```powershell
+cd D:\Proj-8-todo\android-app\TaskFlowMobile
+Copy-Item keystore.properties.example keystore.properties
+```
+
+2. Edit `keystore.properties` with your real values:
+
+```properties
+storeFile=D:/keys/taskflow-release.jks
+storePassword=YOUR_KEYSTORE_PASSWORD
+keyAlias=taskflow-release
+keyPassword=YOUR_KEY_PASSWORD
+```
+
+Notes:
+- `keystore.properties` is ignored by Git
+- `.jks` / `.keystore` files are ignored by Git
+- Release builds use this signing config automatically when all 4 values are present
+
 ## Build signed AAB in Android Studio (recommended)
 
 1. Open project in Android Studio
@@ -192,11 +217,23 @@ app\build\outputs\bundle\release\app-release.aab
 
 ## Optional: Gradle signing config (later)
 
-You can also configure signing in `app/build.gradle.kts` using a `keystore.properties` file, but for first Play upload Android Studio UI is simpler and safer.
+This project already includes a `keystore.properties`-based release signing config in `app/build.gradle.kts`.
+Android Studio UI is still a good option for the first upload if you prefer it.
 
-If needed later, create:
-- `keystore.properties` (ignored from Git)
-- signing config in `app/build.gradle.kts`
+## Repeatable signed build command (PowerShell helper script)
+
+This repo includes a helper script:
+
+```powershell
+cd D:\Proj-8-todo\android-app\TaskFlowMobile
+.\scripts\build-release-aab.ps1
+```
+
+Custom API URL (optional):
+
+```powershell
+.\scripts\build-release-aab.ps1 -ApiBaseUrl "https://imagelink.qtiqo.com/api/"
+```
 
 ## Pre-upload checklist (Google Play)
 
@@ -266,4 +303,3 @@ Test `/api/...` routes instead.
   - production `.env` files
 - Rotate JWT secrets if they were shared anywhere
 - Keep a secure backup of signing keystore and passwords
-
