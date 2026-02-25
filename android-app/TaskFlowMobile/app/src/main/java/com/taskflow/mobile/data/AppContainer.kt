@@ -37,7 +37,11 @@ class AppContainer(context: Context) {
     .readTimeout(20, TimeUnit.SECONDS)
     .addInterceptor(AuthHeaderInterceptor(tokenManager))
     .addInterceptor(RefreshTokenInterceptor(tokenManager, authApi))
-    .addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+    .apply {
+      if (BuildConfig.DEBUG) {
+        addInterceptor(HttpLoggingInterceptor().apply { level = HttpLoggingInterceptor.Level.BASIC })
+      }
+    }
     .build()
 
   private val retrofit = Retrofit.Builder()
@@ -54,4 +58,3 @@ class AppContainer(context: Context) {
     tokenManager = tokenManager
   )
 }
-

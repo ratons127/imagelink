@@ -1,0 +1,19 @@
+[Unit]
+Description=TaskFlow Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/opt/taskflow-backend
+EnvironmentFile=/etc/taskflow/taskflow-backend.env
+ExecStart=/usr/bin/node dist/main.js
+Restart=always
+RestartSec=5
+
+# Increase if your app needs more open files/sockets
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -19,10 +19,10 @@ Native Android client for the TaskFlow backend using:
 
 ## Configure API URL
 
-Edit `app/build.gradle.kts`:
+Edit `app/build.gradle.kts` (or pass a Gradle property for release):
 
 - `debug` uses `http://10.0.2.2:4000/api/` (Android emulator -> local machine)
-- `release` placeholder uses `https://your-api-domain.example/api/`
+- `release` reads `TASKFLOW_RELEASE_API_BASE_URL` (fallback placeholder is `https://your-api-domain.example/api/`)
 
 For EC2 testing on device, set debug URL to your server:
 
@@ -38,5 +38,9 @@ buildConfigField("String", "API_BASE_URL", "\"http://YOUR_EC2_IP:4000/api/\"")
 
 ## Notes
 
-- `usesCleartextTraffic=true` is enabled for local HTTP testing.
-- For production mobile builds, use HTTPS and update the release URL.
+- Cleartext HTTP is enabled for `debug` only.
+- For production mobile builds, use HTTPS and set the release URL.
+
+## Linux VM Backend Template
+
+See `deployment/linux-vm/README.md` for a simple `Nginx + systemd` deployment template.

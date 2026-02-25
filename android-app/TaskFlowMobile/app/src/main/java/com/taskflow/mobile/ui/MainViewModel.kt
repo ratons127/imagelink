@@ -8,11 +8,14 @@ import com.taskflow.mobile.data.api.TaskDto
 import com.taskflow.mobile.data.api.TaskListDto
 import com.taskflow.mobile.data.api.UserProfile
 import com.taskflow.mobile.data.repo.TaskFlowRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 
 data class MainUiState(
   val loading: Boolean = false,
@@ -32,6 +35,8 @@ class MainViewModel(
 ) : ViewModel() {
   private val _uiState = MutableStateFlow(MainUiState())
   val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
+  private val activeActionCount = AtomicInteger(0)
+  private val taskLoadGeneration = AtomicLong(0L)
 
   init {
     if (repo.hasSession()) {
@@ -61,9 +66,13 @@ class MainViewModel(
   fun refreshAll() = launchAction { refreshAllInternal() }
 
   fun selectList(listId: String) {
-    _uiState.update { it.copy(selectedListId = listId) }
+    _uiState.update { it.copy(selectedListId = listId, tasks = emptyList()) }
+    val generation = taskLoadGeneration.incrementAndGet()
     launchAction {
-      _uiState.update { it.copy(tasks = repo.tasks(listId)) }
+      val tasks = repo.tasks(listId)
+      if (taskLoadGeneration.get() == generation && _uiState.value.selectedListId == listId) {
+        _uiState.update { it.copy(tasks = tasks) }
+      }
     }
   }
 
@@ -79,29 +88,49 @@ class MainViewModel(
     if (title.isBlank()) return
     launchAction {
       repo.createTask(listId, title.trim())
-      _uiState.update { it.copy(tasks = repo.tasks(listId)) }
+      val tasks = repo.tasks(listId)
+      if (_uiState.value.selectedListId == listId) {
+        _uiState.update { it.copy(tasks = tasks) }
+      }
     }
   }
 
   fun toggleDone(task: TaskDto) = launchAction {
     val done = task.status == "done"
     repo.setTaskDone(task, !done)
-    val listId = _uiState.value.selectedListId
-    _uiState.update { it.copy(tasks = repo.tasks(listId)) }
+    val listId = _uiState.value.selectedListId ?: task.listId
+    val tasks = repo.tasks(listId)
+    if (_uiState.value.selectedListId == listId) {
+      _uiState.update { it.copy(tasks = tasks) }
+    }
   }
 
   private suspend fun refreshAllInternal() {
     val user = repo.me()
     val lists = repo.lists()
-    val selected = _uiState.value.selectedListId ?: lists.firstOrNull()?.id
+    val selected = _uiState.value.selectedListId
+      ?.takeIf { currentId -> lists.any { it.id == currentId } }
+      ?: lists.firstOrNull()?.id
+    val generation = if (selected != null) taskLoadGeneration.incrementAndGet() else null
     val tasks = if (selected != null) repo.tasks(selected) else emptyList()
-    _uiState.update {
-      it.copy(
+
+    _uiState.update { current ->
+      val finalSelected = current.selectedListId
+        ?.takeIf { currentId -> lists.any { it.id == currentId } }
+        ?: selected
+      val canApplyTasks = generation != null &&
+        taskLoadGeneration.get() == generation &&
+        finalSelected == selected
+      current.copy(
         isAuthenticated = true,
         user = user,
         lists = lists,
-        selectedListId = selected,
-        tasks = tasks,
+        selectedListId = finalSelected,
+        tasks = when {
+          canApplyTasks -> tasks
+          finalSelected == current.selectedListId -> current.tasks
+          else -> emptyList()
+        },
         errorMessage = null
       )
     }
@@ -109,16 +138,20 @@ class MainViewModel(
 
   private fun launchAction(block: suspend () -> Unit) {
     viewModelScope.launch {
+      activeActionCount.incrementAndGet()
       _uiState.update { it.copy(loading = true, errorMessage = null) }
       try {
         block()
+      } catch (e: CancellationException) {
+        throw e
       } catch (e: Exception) {
         if (!repo.hasSession()) {
           _uiState.update { it.copy(isAuthenticated = false, user = null, lists = emptyList(), tasks = emptyList()) }
         }
         _uiState.update { it.copy(errorMessage = e.message ?: "Request failed") }
       } finally {
-        _uiState.update { it.copy(loading = false) }
+        val remaining = activeActionCount.decrementAndGet().coerceAtLeast(0)
+        _uiState.update { it.copy(loading = remaining > 0) }
       }
     }
   }
@@ -133,4 +166,3 @@ class MainViewModel(
       }
   }
 }
-

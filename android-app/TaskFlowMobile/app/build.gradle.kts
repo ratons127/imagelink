@@ -3,6 +3,12 @@ plugins {
   id("org.jetbrains.kotlin.android")
 }
 
+val debugApiBaseUrl = "http://10.0.2.2:4000/api/"
+val releaseApiBaseUrl = providers
+  .gradleProperty("TASKFLOW_RELEASE_API_BASE_URL")
+  .orElse("https://your-api-domain.example/api/")
+  .get()
+
 android {
   namespace = "com.taskflow.mobile"
   compileSdk = 35
@@ -14,12 +20,12 @@ android {
     versionCode = 1
     versionName = "1.0"
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:4000/api/\"")
+    buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
   }
 
   buildTypes {
     debug {
-      buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:4000/api/\"")
+      buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
     }
     release {
       isMinifyEnabled = false
@@ -27,7 +33,7 @@ android {
         getDefaultProguardFile("proguard-android-optimize.txt"),
         "proguard-rules.pro"
       )
-      buildConfigField("String", "API_BASE_URL", "\"https://your-api-domain.example/api/\"")
+      buildConfigField("String", "API_BASE_URL", "\"$releaseApiBaseUrl\"")
     }
   }
 
